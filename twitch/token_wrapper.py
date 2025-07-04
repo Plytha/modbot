@@ -7,10 +7,9 @@ import time
 
 class Token:
 
-    def __init__(self, token, refresh_token):
+    def __init__(self, token):
         
         self.token = token
-        self.refresh_token = refresh_token
         self.validated = False
         self.validated_time = None
 
@@ -20,9 +19,11 @@ class Token:
         self.validated_time = time.time()
 
     @property
-    def is_valid():
+    def is_valid(self):
         """Check if the token has to be validated as per Twitch regulation"""
         if self.validated_time is None:
             return False
         
-        return self.validated == True and (time.time() - self.validated_time < 3600)
+        return self.validated and (time.time() - self.validated_time < 3600)
+
+    

@@ -51,10 +51,12 @@ async def wrapper_send(content):
 async def send_dm_no_ctx(websocket):
     global client, bot, dm_channel, client_loop
 
+    
+    
     out = ""
-    async for message in websocket:
-        out += message
-
+    last_msg = await websocket.recv()
+    out = last_msg
+    print(f"(II) Sending msg to dm: {out}")
 
     if dm_channel is not None:
         await dm_channel.send(f"{out}")

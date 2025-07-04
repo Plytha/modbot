@@ -5,8 +5,9 @@ load_dotenv()
 import os, sys
 from bot import Bot
 
+import asyncio
 
-def main():
+async def main():
     bot_id = os.getenv("TWITCH_BOT_ID")
     bot_secret = os.getenv("TWITCH_BOT_SECRET")
     bot = Bot(bot_id, bot_secret)
@@ -16,7 +17,9 @@ def main():
 
     #bot.send_msg("Hello, World!")
 
-    bot.start_reading_chat()
+    await bot.irc_connect_to_chat_read()
     
 if __name__ == "__main__":
-    main()
+    loop = asyncio.new_event_loop()
+    loop.create_task(main())
+    loop.run_forever()

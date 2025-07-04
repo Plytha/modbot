@@ -2,7 +2,7 @@ import os, sys
 import requests
 import json
 from websocket_handler import Websocket_Handler
-from jwt_token import Token
+from token_wrapper import Token
 from constants import API_ENDPOINTS
 import time
 import asyncio
@@ -16,19 +16,9 @@ class Bot:
         self.secret = secret
         self.sender_id = os.getenv("TWITCH_SELF_ID")
 #         self.code = os.getenv("CODE")
-        self.token = None
-
-        self.websocket = Websocket_Handler()
-        self.chat_websocket = Websocket_Handler()
-
-        self.last_token_update = None
-
-    def start_reading_chat(self):
-        loop = asyncio.get_event_loop()
-
-        loop.create_task(self.connect_to_chat_read())
-
-        loop.run_forever()
+        self.irc_token = Token(os.getenv("TWITCH_IRC_TOKEN"))
+        self.websocket = None
+        self.discord_websocket = None
         
 
     def handle_request(self, request_body, request_header, endpoint, post = True):
@@ -53,91 +43,61 @@ class Bot:
              raise Exception(f"Request returned with status code {rq.status_code} and content {rq.content}")  
 
 
-    def get_new_token(self):
-        print("(II) Getting new token")
-
-        request_body = f"client_id={self.id_}&client_secret={self.secret}&grant_type=client_credentials"
-        request_header = {"Content-Type": "application/x-www-form-urlencoded"}
-        endpoint="GET_TOKEN"
-        data = self.handle_request(request_body, request_header, endpoint)
-    
-        
-        if not "access_token" in data.keys():
-            print("Could not read a token in response")
-            self.token = None
-            return
-
-        print("(II) Extracting token")
-        self.token = data["access_token"]
-        
-        self.validate_token()
         
     def validate_token(self):
         """Validate the Token when required"""
 
         # Validate the token if it requires
-        if (self.last_token_update is not None) \
-        and (time.time() - self.last_token_update < 3600):
+        if self.irc_token.is_valid:
             return # no need to validate token
         
-        if self.token is None:
-            raise Exception("The bot has no token.")
-
+        #if self.token is None:
+        #    raise Exception("The bot has no token.")
         
 
         # Request for a token validation
         print("(II) Requesting validation")
         endpoint = "VALIDATE"
-        request_header = {"Authorization": f"OAuth {self.token}"}
+        request_header = {"Authorization": f"OAuth {self.irc_token.token}"}
         request_body = ""
         self.handle_request(request_body, request_header, endpoint, post=False)
-        
-        # Update the validation time
-        print("(II) Validation time updates")
-        self.last_token_update = time.time()
 
-    def validate_oauth(self):
-        """Validate the Oauth when required"""
+        self.irc_token.validate()
+
+    async def forward_to_discord(self, message):
+        """Discord websocket is write-only"""
+        if self.discord_websocket is None:
+            print("(II) No websocket for discord. Opening...")
+            self.discord_websocket = await connect("ws://localhost:8765")
+        print("(II) forwarded message to discord")
+        await self.discord_websocket.send(message)
 
     
-        # Request for a token validation
-        print("(II) Requesting validation for Oauth")
-        endpoint = "VALIDATE"
-        request_header = {"Authorization": f"OAuth {os.getenv('TWITCH_IRC_TOKEN')}"}
-        request_body = ""
-        self.handle_request(request_body, request_header, endpoint, post=False)
-        
-                
-    def debug_dump_token(self):
-        if self.token is None:
-            print("No token received SMH")
-            return
-
-        print(f"Received token {self.token}")
-
-    async def print_msg(self):
+    async def irc_print_msg(self):
         while True:
             message = await self.websocket.recv()
             if message == "PING :tmi.twitch.tv":
                 print("Received ping, sending pong")
                 await self.websocket.send("PONG :tmi.twitch.tv")
             else:
+                await self.forward_to_discord(message)
                 print(f"Received message {message}")
 
-    async def connect_to_chat_read(self):
+    async def irc_connect_to_chat_read(self):
         self.websocket = await connect("wss://irc-ws.chat.twitch.tv:443")
+        self.validate_token()
         await self.websocket.send("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands")
             
 
         reply = await self.websocket.recv()
         print(reply)
         #            self.validate_oauth()
-        print(f"Attempt to connect with token {self.token} and nickname plyplybot")
-        await self.websocket.send(f"PASS oauth:{os.getenv('TWITCH_IRC_TOKEN')}")
+        print(f"Attempt to connect with token {self.irc_token} and nickname plyplybot")
+        await self.websocket.send(f"PASS oauth:{self.irc_token.token}")
             
         await self.websocket.send("NICK plyplybot")
 
-        asyncio.get_event_loop().create_task(self.print_msg())
+        asyncio.get_event_loop().create_task(self.irc_print_msg())
             
         # Connect to the channel
         await self.websocket.send("JOIN #deplytha")
@@ -149,26 +109,3 @@ class Bot:
                 else:
                     print(f"Received message {message}")"""
 
-    def send_msg(self, msg, recipient_id=None):
-        if recipient_id is None: # default test value
-            recipient_id = os.getenv("TWITCH_CHANNEL_ID")
-            
-        print(f"(II) Sending message to channel with id {recipient_id}")
-        # ensure token is valid
-        self.validate_token()
-
-        request_body = json.dumps({
-            "broadcaster_id": f"{recipient_id}",
-            "sender_id": f"{self.sender_id}",
-            "message": f"{msg}"
-        })
-        request_header = {
-            "Authorization": f"Bearer {self.token}",
-            "Client-id": f"{self.id_}",
-            "Content-Type": "application/json"
-        }
-
-        endpoint = "SEND_MESSAGE"
-
-        print("(II) Request sent")
-        self.handle_request(request_body, request_header, endpoint)
