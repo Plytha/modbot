@@ -95,7 +95,18 @@ class Bot:
         # Update the validation time
         print("(II) Validation time updates")
         self.last_token_update = time.time()
-            
+
+    def validate_oauth(self):
+        """Validate the Oauth when required"""
+
+    
+        # Request for a token validation
+        print("(II) Requesting validation for Oauth")
+        endpoint = "VALIDATE"
+        request_header = {"Authorization": f"OAuth {os.getenv('TWITCH_IRC_TOKEN')}"}
+        request_body = ""
+        self.handle_request(request_body, request_header, endpoint, post=False)
+        
                 
     def debug_dump_token(self):
         if self.token is None:
@@ -104,26 +115,39 @@ class Bot:
 
         print(f"Received token {self.token}")
 
+    async def print_msg(self):
+        while True:
+            message = await self.websocket.recv()
+            if message == "PING :tmi.twitch.tv":
+                print("Received ping, sending pong")
+                await self.websocket.send("PONG :tmi.twitch.tv")
+            else:
+                print(f"Received message {message}")
 
     async def connect_to_chat_read(self):
-        async with connect("wss://irc-ws.chat.twitch.tv:443") as websocket:
-            await websocket.send("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands")
+        self.websocket = await connect("wss://irc-ws.chat.twitch.tv:443")
+        await self.websocket.send("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands")
             
 
-            reply = await websocket.recv()
-            print(reply)
-
-            print(f"Attempt to connect with token {os.getenv('TWITCH_IRC_OAUTH_TEMP_TEST')} and nickname deplytha")
-            await websocket.send(f"PASS oauth:{os.getenv('TWITCH_IRC_OAUTH_TEMP_TEST')}")
+        reply = await self.websocket.recv()
+        print(reply)
+        #            self.validate_oauth()
+        print(f"Attempt to connect with token {self.token} and nickname plyplybot")
+        await self.websocket.send(f"PASS oauth:{os.getenv('TWITCH_IRC_TOKEN')}")
             
-            await websocket.send("NICK deplytha")
-            while True:
+        await self.websocket.send("NICK plyplybot")
+
+        asyncio.get_event_loop().create_task(self.print_msg())
+            
+        # Connect to the channel
+        await self.websocket.send("JOIN #deplytha")
+        """while True:
                 message = await websocket.recv()
                 if message == "PING :tmi.twitch.tv":
                     print("Received ping, sending pong")
                     await websocket.send("PONG :tmi.twitch.tv")
                 else:
-                    print(f"Received message {message}")
+                    print(f"Received message {message}")"""
 
     def send_msg(self, msg, recipient_id=None):
         if recipient_id is None: # default test value

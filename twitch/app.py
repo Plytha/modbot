@@ -11,10 +11,10 @@ def main():
     bot_secret = os.getenv("TWITCH_BOT_SECRET")
     bot = Bot(bot_id, bot_secret)
 
-    bot.get_new_token()
-    bot.debug_dump_token()
+    #bot.get_new_token()
+    #bot.debug_dump_token()
 
-    bot.send_msg("Hello, World!")
+    #bot.send_msg("Hello, World!")
 
     bot.start_reading_chat()
     
