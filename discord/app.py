@@ -34,7 +34,7 @@ async def on_ready(client=client, game=game):
     global dm_channel
     print("Logged in.")
     await bot.change_presence(activity=game)
-    dm_channel = await bot.fetch_channel(os.getenv("DISCORD_DM_TARGET"))
+    dm_channel = await bot.fetch_channel(os.getenv("DISCORD_TEST_DM_TARGET"))
     asyncio.get_event_loop().create_task(ws_handle())
 
 

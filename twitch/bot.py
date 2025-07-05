@@ -76,6 +76,7 @@ class Bot:
     async def irc_print_msg(self):
         while True:
             message = await self.websocket.recv()
+            print(f"(II) GOT MESSAGE {message}")
             if message == "PING :tmi.twitch.tv":
                 print("Received ping, sending pong")
                 await self.websocket.send("PONG :tmi.twitch.tv")
