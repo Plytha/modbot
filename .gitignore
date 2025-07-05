@@ -1,3 +1,8 @@
+# Log files
+
+discord_logs.txt
+twitch_logs.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
