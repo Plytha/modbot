@@ -8,6 +8,7 @@ import time
 import asyncio
 from websockets.asyncio.client import connect
 from websockets.asyncio.server import serve
+from irc_msg_handler import IRC_Handler
 
 class Bot:
 
@@ -19,6 +20,8 @@ class Bot:
         self.irc_token = Token(os.getenv("TWITCH_IRC_TOKEN"))
         self.websocket = None
         self.discord_websocket = None
+
+        self.msg_handler = IRC_Handler("config.json", "deplytha")
         
 
     def handle_request(self, request_body, request_header, endpoint, post = True):
@@ -81,7 +84,9 @@ class Bot:
                 print("Received ping, sending pong")
                 await self.websocket.send("PONG :tmi.twitch.tv")
             else:
-                await self.forward_to_discord(message)
+                message_content = self.msg_handler.process(message)
+                if message_content is not None:
+                    await self.forward_to_discord(str(message_content))
                 print(f"Received message {message}")
 
     async def irc_connect_to_chat_read(self):
