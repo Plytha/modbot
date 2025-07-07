@@ -18,7 +18,7 @@ class IRC_Handler:
                 if "display-name" in field:
                     author = field.split("=")[1]
             content = message.split(f"#{self.channel_name}")[-1]
-            content = "".join([x for x in content.split(":")[1:]])
+            content = content.split(":", 1)[1]
 
             return IRC_Message(author, content)
         return None
