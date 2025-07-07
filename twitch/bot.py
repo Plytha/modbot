@@ -21,7 +21,7 @@ class Bot:
         self.websocket = None
         self.discord_websocket = None
 
-        self.msg_handler = IRC_Handler("config.json", "deplytha")
+        self.msg_handler = IRC_Handler("rules.json", "deplytha")
         
 
     def handle_request(self, request_body, request_header, endpoint, post = True):
@@ -85,7 +85,7 @@ class Bot:
                 await self.websocket.send("PONG :tmi.twitch.tv")
             else:
                 message_content = self.msg_handler.process(message)
-                if message_content is not None:
+                if message_content is not None and message_content.flagged:
                     await self.forward_to_discord(str(message_content))
                 print(f"Received message {message}")
 
