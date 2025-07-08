@@ -12,7 +12,7 @@ class IRC_Message:
         self.analysis = analysis
 
     @property
-    def flagged():
+    def flagged(self):
         return self.analysis["flagged"]
         
 

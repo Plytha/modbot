@@ -4,6 +4,7 @@ Handler for messages received via irc websocket
 
 from irc_message import IRC_Message
 import json
+from rule import Rule
 
 
 class IRC_Handler:
@@ -20,8 +21,11 @@ class IRC_Handler:
         with open(f"twitch/config/{self.config_filename}", "r") as f:
             data = json.load(f)
 
-            print(data)
-            raise RuntimeError("Not implemented yet")
+            rules = data["rules"]
+            for rule in rules:
+                rule_object = Rule(rule["name"], rule["matches"] == "all", rule["filters"]["words"], rule["filters"]["regex"])
+                self.rules.append(rule_object)
+
         
     def process(self, message: str):
         """Remove the headers from message and return its content"""

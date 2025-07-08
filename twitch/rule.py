@@ -24,9 +24,9 @@ class Rule:
     def check(self, message: str) -> bool:
         """Check if the rule is met"""
 
-        if match_all:
-            return _check_all(message)
-        return _check_any(message)
+        if self.match_all:
+            return self._check_all(message)
+        return self._check_any(message)
 
     def _check_all(self, message: str) -> bool:
         for word in self.words_filters:
@@ -42,7 +42,7 @@ class Rule:
 
         return False
 
-    def to_dict(self)
+    def to_dict(self):
         return {
             "name": self.name,
             "flagged": True
