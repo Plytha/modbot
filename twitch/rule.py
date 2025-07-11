@@ -40,8 +40,9 @@ class Rule:
 
     def _check_all_unordered(self, message: str) -> bool:
         # breakpoint()
+        message_words = [sanitize(x) for x in message.split(" ")]
         for word in self.words_filters:
-            if not word in message:
+            if not word in message_words:
                 return False
 
         return True
@@ -54,14 +55,14 @@ class Rule:
 
         # find all instances of first word
         occurences = message.count(self.words_filters[0])
-        message_words = message.split(" ")
+        message_words = [sanitize(x) for x in message.split(" ")]
         matches = 0
 
         for i, word in enumerate(message_words):
-            if sanitize(word) == self.words_filters[matches]:
+            if word == self.words_filters[matches]:
                 matches += 1
                 
-            elif sanitize(word) in self.words_filters:
+            elif word in self.words_filters:
                 matches = 0
 
             if matches == len(self.words_filters):
@@ -75,6 +76,7 @@ class Rule:
 
     
     def _check_any(self, message: str) -> bool:
+        message_words = [sanitize(x) for x in message.split(" ")]
         for word in self.words_filters:
             if word in message:
                 return True

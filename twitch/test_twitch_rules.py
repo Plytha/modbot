@@ -152,3 +152,18 @@ def test_multiple_word_all_unordered_rule_does_not_fire_on_words_missing():
     rule = build_from_dict(rule_dict)
     message_string = "one three ten five six"
     assert not rule.check(message_string)
+
+def test_ensure_having_a_word_as_a_substring_of_another_does_not_fire():
+    rule_dict = {
+        "name": "one word test",
+        "matches": "all",
+        "filters": 
+        {
+            "words": ["test"],
+            "regex": []
+        }
+    }
+
+    rule = build_from_dict(rule_dict)
+    message_string = "Man I love writing unit tests"
+    assert not rule.check(message_string)
