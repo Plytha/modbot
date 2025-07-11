@@ -3,6 +3,8 @@
 discord_logs.txt
 twitch_logs.txt
 
+todo.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
