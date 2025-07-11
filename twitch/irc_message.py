@@ -17,4 +17,4 @@ class IRC_Message:
         
 
     def __str__(self):
-        return f"[{datetime.datetime.now()} | {self.author}]: {self.content} (broke rule {self.analysis["name"]})"
+        return f"[{datetime.datetime.now()} | {self.author}]: {self.content.replace('\n','')} (broke rule {self.analysis['name']})"
