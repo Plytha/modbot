@@ -23,7 +23,15 @@ class IRC_Handler:
 
             rules = data["rules"]
             for rule in rules:
-                rule_object = Rule(rule["name"], rule["matches"] == "all", rule["filters"]["words"], rule["filters"]["regex"])
+                if "ordered" in rule.keys():
+                    ordered = rule["ordered"]
+                else:
+                    ordered = False
+                rule_object = Rule(rule["name"], 
+                                   rule["matches"] == "all", 
+                                   ordered,
+                                   rule["filters"]["words"],
+                                   rule["filters"]["regex"])
                 self.rules.append(rule_object)
 
         
@@ -46,6 +54,7 @@ class IRC_Handler:
         """Apply the rules to a given message"""
         for rule in self.rules:
             if rule.check(message):
+                print("(II) Rule matched")
                 return rule.to_dict()
 
         return {"name": "placeholder", "flagged": False}
