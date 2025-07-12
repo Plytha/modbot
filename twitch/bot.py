@@ -75,6 +75,11 @@ class Bot:
         print("(II) forwarded message to discord")
         await self.discord_websocket.send(message)
 
+    async def cleanup(self):
+        if self.discord_websocket is not None:
+            await self.discord_websocket.close()
+        await self.websocket.close()
+        asyncio.get_event_loop().stop()
     
     async def irc_print_msg(self):
         while True:
@@ -85,9 +90,18 @@ class Bot:
                 await self.websocket.send("PONG :tmi.twitch.tv")
             else:
                 message_content = self.msg_handler.process(message)
-                if message_content is not None and message_content.flagged:
-                    await self.forward_to_discord(str(message_content))
-                print(f"Received message {message}")
+                if message_content is not None:
+                    print(f"Content: {message_content.content}")
+                    if message_content.author == "deplytha" and \
+                       message_content.content == "stop":
+                        await self.cleanup()
+                        return
+
+                    if message_content.flagged:
+                        await self.forward_to_discord(str(message_content))
+
+                    
+                    print(f"Received message {message}")
 
     async def irc_connect_to_chat_read(self):
         self.websocket = await connect("wss://irc-ws.chat.twitch.tv:443")
@@ -98,20 +112,17 @@ class Bot:
         reply = await self.websocket.recv()
         print(reply)
         #            self.validate_oauth()
-        print(f"Attempt to connect with token {self.irc_token} and nickname plyplybot")
+        # print(f"Attempt to connect with token {self.irc_token} and nickname plyplybot")
         await self.websocket.send(f"PASS oauth:{self.irc_token.token}")
             
         await self.websocket.send("NICK plyplybot")
+
+        message = await self.websocket.recv()
+        if not "Welcome, GLHF!" in message:
+            raise RuntimeError(f"Could not connect to twitch.tv. Replied with {message}")
 
         asyncio.get_event_loop().create_task(self.irc_print_msg())
             
         # Connect to the channel
         await self.websocket.send("JOIN #deplytha")
-        """while True:
-                message = await websocket.recv()
-                if message == "PING :tmi.twitch.tv":
-                    print("Received ping, sending pong")
-                    await websocket.send("PONG :tmi.twitch.tv")
-                else:
-                    print(f"Received message {message}")"""
 

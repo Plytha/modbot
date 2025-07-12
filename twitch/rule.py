@@ -27,7 +27,7 @@ class Rule:
     def check(self, message: str) -> bool:
         """Check if the rule is met"""
         print(f"(II) Applying rule {self.name} to message {message}")
-        
+
         if self.match_all:
             words_match = self._check_all(message) if self.check_words else True
             regex_match = self._check_regex(message) if self.check_regex else True
@@ -105,4 +105,4 @@ class Rule:
 
 
 def sanitize(word):
-    return word.lower().replace("\n","").replace("\r","")
+    return word.lower()

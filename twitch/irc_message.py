@@ -8,7 +8,7 @@ class IRC_Message:
 
     def __init__(self, author: str, content: str, analysis: dict):
         self.author = author
-        self.content = content
+        self.content = content.replace("\n","").replace("\r","")
         self.analysis = analysis
 
     @property

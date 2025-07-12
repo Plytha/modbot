@@ -3,6 +3,7 @@ Handler for messages received via irc websocket
 """
 
 from irc_message import IRC_Message
+import os
 import json
 from rule import Rule
 import re
@@ -18,7 +19,9 @@ class IRC_Handler:
         self.setup_rules()
 
     def setup_rules(self):
-        with open(f"twitch/config/{self.config_filename}", "r") as f:
+        if not os.path.exists(os.path.join("twitch/config", self.config_filename)):
+            raise RuntimeError(f"File {os.path.join('twitch/config', self.config_filename)} does not exist.")
+        with open(os.path.join("twitch/config", self.config_filename), "r") as f:
             data = json.load(f)
 
             rules = data["rules"]
