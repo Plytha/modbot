@@ -5,7 +5,7 @@ Handler for messages received via irc websocket
 from irc_message import IRC_Message
 import json
 from rule import Rule
-
+import re
 
 class IRC_Handler:
 
@@ -23,15 +23,22 @@ class IRC_Handler:
 
             rules = data["rules"]
             for rule in rules:
+                name = rule["name"]
+                matches_all = (rule["matches"] == "all")
+
                 if "ordered" in rule.keys():
                     ordered = rule["ordered"]
                 else:
                     ordered = False
-                rule_object = Rule(rule["name"], 
-                                   rule["matches"] == "all", 
+
+                word_filters = [x.lower() for x in rule["filters"]["words"]]
+                regex_filters = [re.compile(x) for x in rule["filters"]["regex"]]
+
+                rule_object = Rule(name, 
+                                   matches_all, 
                                    ordered,
-                                   rule["filters"]["words"],
-                                   rule["filters"]["regex"])
+                                   word_filters,
+                                   regex_filters)
                 self.rules.append(rule_object)
 
         

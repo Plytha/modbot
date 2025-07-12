@@ -1,7 +1,7 @@
 """
 Class to instantiate rules from the json file
 """
-
+import re
 
 class Rule:
 
@@ -16,11 +16,10 @@ class Rule:
         self.match_all = match_all
         self.is_ordered = is_ordered
         self.words_filters = words_filters
+        self.check_words = (len(self.words_filters) > 0)
         self.regex_filters = regex_filters # not implemented for now
+        self.check_regex = (len(self.regex_filters) > 0)
 
-        if self.regex_filters is not None \
-           and len(self.regex_filters) > 0:
-            raise RuntimeError("Regex based filters are not implemented yet")
         
         if self.is_ordered and not self.match_all:
             print(f"(WW) Rule {self.name} set to be ordered when any word triggers. Argument disregarded.")
@@ -28,9 +27,15 @@ class Rule:
     def check(self, message: str) -> bool:
         """Check if the rule is met"""
         print(f"(II) Applying rule {self.name} to message {message}")
+        
         if self.match_all:
-            return self._check_all(message)
-        return self._check_any(message)
+            words_match = self._check_all(message) if self.check_words else True
+            regex_match = self._check_regex(message) if self.check_regex else True
+            return words_match and regex_match
+
+        words_match = self._check_any(message) if self.check_words else False
+        regex_match = self._check_regex(message) if self.check_regex else False
+        return words_match or regex_match
 
     def _check_all(self, message: str) -> bool:
         # breakpoint()
@@ -38,12 +43,20 @@ class Rule:
             return self._check_all_ordered(message)
         return self._check_all_unordered(message)
 
+    def _check_regex(self, message: str) -> bool:
+        for regex in self.regex_filters: # just in case, will probably often be only one regex
+            if regex.search(message) is None:
+                return False
+
+        return True
+
     def _check_all_unordered(self, message: str) -> bool:
         # breakpoint()
         message_words = [sanitize(x) for x in message.split(" ")]
         for word in self.words_filters:
             if not word in message_words:
                 return False
+        
 
         return True
 
